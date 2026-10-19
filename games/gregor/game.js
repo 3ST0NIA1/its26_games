@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -13,10 +14,49 @@ const firebaseConfig = {
     measurementId: "G-2KNME0CSZZ"
 };
 
-// Initialize Firebase & Firestore
+// Initialize Firebase & Services
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+// Track Google Auth State Changes
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    const displayNameElem = document.getElementById('user-display-name');
+    const loginBtn = document.getElementById('btn-google-login');
+    const submitBtn = document.getElementById('btn-submit-score');
+
+    if (user) {
+        if (displayNameElem) displayNameElem.innerText = `👤 ${user.displayName || 'Player'}`;
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit Score to Global Leaderboard';
+            submitBtn.className = 'bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer';
+        }
+    } else {
+        if (displayNameElem) displayNameElem.innerText = 'Not signed in';
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Sign in to Submit Score';
+            submitBtn.className = 'bg-slate-700 text-slate-500 text-xs font-bold px-4 py-2.5 rounded-xl cursor-not-allowed transition';
+        }
+    }
+});
+
+// Google Popup Login Function
+async function handleGoogleLogin() {
+    try {
+        await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+        console.error("Google auth failed:", error);
+    }
+}
 
 // --- Game Logic ---
 const canvas = document.getElementById('gameCanvas');
@@ -1540,10 +1580,9 @@ async function fetchLeaderboard() {
 }
 
 async function submitScore() {
-    const nameInput = document.getElementById('player-name-input');
-    const name = nameInput ? nameInput.value.trim() : 'Anonymous';
-    const btn = document.getElementById('btn-submit-score');
+    if (!currentUser) return;
 
+    const btn = document.getElementById('btn-submit-score');
     if (btn) {
         btn.disabled = true;
         btn.innerText = 'Submitting...';
@@ -1551,22 +1590,24 @@ async function submitScore() {
 
     try {
         await addDoc(collection(db, "leaderboard"), {
-            name: name || 'Anonymous',
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Anonymous',
+            photoURL: currentUser.photoURL || '',
             time: gameTime,
             kills: guardKills,
             timestamp: serverTimestamp()
         });
 
         if (btn) {
-            btn.innerText = 'Submitted!';
-            btn.classList.replace('bg-amber-600', 'bg-emerald-600');
+            btn.innerText = 'Score Posted! 🎉';
+            btn.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl';
         }
         fetchLeaderboard();
     } catch (e) {
         console.error("Error adding document: ", e);
         if (btn) {
             btn.disabled = false;
-            btn.innerText = 'Retry';
+            btn.innerText = 'Retry Submission';
         }
     }
 }
@@ -1621,13 +1662,6 @@ function triggerVictory() {
         localStorage.setItem('shadow_castle_v3_kills', guardKills.toString());
     }
 
-    const submitBtn = document.getElementById('btn-submit-score');
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Submit Score';
-        submitBtn.className = 'bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition';
-    }
-
     document.getElementById('modal-victory').classList.remove('hidden');
 }
 
@@ -1650,10 +1684,8 @@ document.getElementById('btn-restart-pause').addEventListener('click', startGame
 document.getElementById('btn-restart-dead').addEventListener('click', startGame);
 document.getElementById('btn-restart-victory').addEventListener('click', startGame);
 
-const submitScoreBtn = document.getElementById('btn-submit-score');
-if (submitScoreBtn) {
-    submitScoreBtn.addEventListener('click', submitScore);
-}
+document.getElementById('btn-google-login')?.addEventListener('click', handleGoogleLogin);
+document.getElementById('btn-submit-score')?.addEventListener('click', submitScore);
 
 window.onload = () => {
     loadHighScores();
