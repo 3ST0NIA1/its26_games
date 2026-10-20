@@ -1,21 +1,87 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="et">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ragnar — mäng</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; background: #0a0e12; color: #e8f0ff; display: grid; place-items: center; padding: 1.5rem; }
-    a { color: #5eead4; }
-    .box { text-align: center; max-width: 28rem; line-height: 1.6; }
-  </style>
+<meta charset="UTF-8">
+<title>Horse Racing 🐎</title>
+<style>
+body {
+  background: #164b2b;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
+button {
+  padding: 10px;
+  margin: 5px;
+  cursor: pointer;
+}
+.track {
+  background: #b58b54;
+  padding: 12px;
+  margin: 8px;
+  font-size: 24px;
+}
+</style>
 </head>
 <body>
-  <div class="box">
-    <h1>Ragnar</h1>
-    <p>Siia tuleb sinu mäng. Asenda see fail või lisa siia oma HTML/CSS/JS.</p>
-    <p><a href="../../index.html">← tagasi dashboardile</a></p>
-  </div>
+
+<h1>🐎 Horse Racing</h1>
+<h2>Raha: $<span id="money">100</span></h2>
+
+<p>Vali hobune ja panusta!</p>
+<select id="horse">
+  <option value="0">🐎 Välk (2x)</option>
+  <option value="1">🐴 Äike (3x)</option>
+  <option value="2">🏇 Torm (5x)</option>
+</select>
+
+<br><br>
+<input id="bet" type="number" min="1"
+placeholder="Panus $" value="10">
+<button onclick="race()">Alusta võistlust!</button>
+
+<h3 id="result">Valmis võistluseks?</h3>
+<div id="track"></div>
+
+<script>
+let money = 100;
+
+function race() {
+  let bet = Number(document.getElementById("bet").value);
+  let chosen = Number(document.getElementById("horse").value);
+
+  if (bet <= 0 || bet > money) {
+    alert("Sul pole piisavalt raha!");
+    return;
+  }
+
+  money -= bet;
+
+  let winner = Math.floor(Math.random() * 3);
+  let horses = ["🐎 Välk", "🐴 Äike", "🏇 Torm"];
+  let odds = [2, 3, 5];
+
+  document.getElementById("track").innerHTML =
+    horses.map((h, i) =>
+      `<div class="track">${h} ${
+        i === winner ? "🏆 VÕITJA!" : "🏁"
+      }</div>`
+    ).join("");
+
+  if (chosen === winner) {
+    let prize = bet * odds[winner];
+    money += prize;
+    document.getElementById("result").innerText =
+      "Võitsid $" + prize + "! 🎉";
+  } else {
+    document.getElementById("result").innerText =
+      "Kaotasid panuse! Võitis " + horses[winner];
+  }
+
+  document.getElementById("money").innerText = money;
+}
+</script>
+
 </body>
 </html>
