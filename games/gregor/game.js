@@ -1332,11 +1332,11 @@ bindTouchBtn('btn-touch-right', 'right');
 bindTouchBtn('btn-touch-crouch', 'crouch');
 bindTouchBtn('btn-touch-sprint', 'sprint');
 
-document.getElementById('btn-touch-strike').addEventListener('touchstart', (e) => {
+document.getElementById('btn-touch-strike')?.addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (player && gameState === 'PLAYING') player.attack();
 });
-document.getElementById('btn-touch-rock').addEventListener('touchstart', (e) => {
+document.getElementById('btn-touch-rock')?.addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (player && gameState === 'PLAYING') player.throwRock();
 });
@@ -1636,6 +1636,18 @@ function togglePause() {
     }
 }
 
+function returnToMainMenu() {
+    gameState = 'START';
+    resetKeys();
+    loadHighScores();
+    
+    // Hide all in-game modals and display main start menu
+    document.getElementById('modal-pause')?.classList.add('hidden');
+    document.getElementById('modal-gameover')?.classList.add('hidden');
+    document.getElementById('modal-victory')?.classList.add('hidden');
+    document.getElementById('modal-start')?.classList.remove('hidden');
+}
+
 function triggerGameOver() {
     gameState = 'GAMEOVER';
     document.getElementById('go-flag-status').innerText = flagCaptured ? 'Yes' : 'No';
@@ -1697,6 +1709,11 @@ document.getElementById('btn-resume').addEventListener('click', togglePause);
 document.getElementById('btn-restart-pause').addEventListener('click', startGame);
 document.getElementById('btn-restart-dead').addEventListener('click', startGame);
 document.getElementById('btn-restart-victory').addEventListener('click', startGame);
+
+// Return to Main Menu listeners
+document.getElementById('btn-menu-pause')?.addEventListener('click', returnToMainMenu);
+document.getElementById('btn-menu-dead')?.addEventListener('click', returnToMainMenu);
+document.getElementById('btn-menu-victory')?.addEventListener('click', returnToMainMenu);
 
 document.getElementById('btn-google-login')?.addEventListener('click', handleGoogleLogin);
 document.getElementById('btn-submit-score')?.addEventListener('click', submitScore);
