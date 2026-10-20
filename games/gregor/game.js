@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -21,16 +21,29 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Restrict Google Sign-In prompt to voco.ee accounts
+googleProvider.setCustomParameters({
+    'hd': 'voco.ee'
+});
+
 let currentUser = null;
 
 // Track Google Auth State Changes
-onAuthStateChanged(auth, (user) => {
-    currentUser = user;
+onAuthStateChanged(auth, async (user) => {
     const displayNameElem = document.getElementById('user-display-name');
     const loginBtn = document.getElementById('btn-google-login');
     const submitBtn = document.getElementById('btn-submit-score');
 
     if (user) {
+        // Enforce @voco.ee email domain restriction
+        if (!user.email || !user.email.endsWith('@voco.ee')) {
+            alert('Access restricted! Please sign in with your official @voco.ee account.');
+            await signOut(auth);
+            currentUser = null;
+            return;
+        }
+
+        currentUser = user;
         if (displayNameElem) displayNameElem.innerText = `👤 ${user.displayName || 'Player'}`;
         if (loginBtn) loginBtn.classList.add('hidden');
         if (submitBtn) {
@@ -39,6 +52,7 @@ onAuthStateChanged(auth, (user) => {
             submitBtn.className = 'bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer';
         }
     } else {
+        currentUser = null;
         if (displayNameElem) displayNameElem.innerText = 'Not signed in';
         if (loginBtn) loginBtn.classList.remove('hidden');
         if (submitBtn) {
