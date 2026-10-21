@@ -22,9 +22,9 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 // Restrict Google Sign-In prompt to voco.ee domain
-googleProvider.setCustomParameters({
-    'hd': 'voco.ee'
-});
+// googleProvider.setCustomParameters({
+//     'hd': 'voco.ee'
+// });
 
 let currentUser = null;
 let isMobileDevice = false;
