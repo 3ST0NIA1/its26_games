@@ -449,7 +449,7 @@ class Player {
 
         this.moveWithCollision(dx * moveSpeed, dy * moveSpeed);
 
-        // Auto Look-At Nearest Guard on Mobile
+        // Aiming Logic: Auto-lock only on Mobile, manual mouse aim on Desktop
         if (isMobileDevice) {
             let closestGuard = null;
             let minDistance = 280;
@@ -474,6 +474,7 @@ class Player {
                 worldMouseY = this.y + dy * 150;
             }
         } else {
+            // Strictly manual aiming via mouse position on Desktop
             this.angle = Math.atan2(worldMouseY - this.y, worldMouseX - this.x);
         }
 
