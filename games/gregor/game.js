@@ -113,13 +113,14 @@ onAuthStateChanged(auth, async (user) => {
 
 async function handleGoogleLogin() {
     try {
+        // Always try popup mode first (keeps login scoped inside the browser window)
         await signInWithPopup(auth, googleProvider);
     } catch (error) {
-        console.warn("Popup blocked or failed, attempting redirect login:", error);
-        try {
+        console.warn("Popup blocked or failed, fallback to redirect:", error);
+        
+        // Fallback to redirect only if popups are strictly blocked by browser settings
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
             await signInWithRedirect(auth, googleProvider);
-        } catch (redirectError) {
-            console.error("Google login failed:", redirectError);
         }
     }
 }
